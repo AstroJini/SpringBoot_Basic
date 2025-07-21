@@ -8,6 +8,8 @@ import com.beyond.basic.b2_board.author.dto.AuthorUpdatePwDto;
 //import com.beyond.basic.b2_board.repository.AuthorJdbcRepository;
 //import com.beyond.basic.b2_board.repository.AuthorMemoryRepository;
 import com.beyond.basic.b2_board.author.repository.AuthorRepository;
+import com.beyond.basic.b2_board.post.domain.Post;
+import com.beyond.basic.b2_board.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +21,7 @@ import java.util.stream.Collectors;
 // Component 로도 대채 가능(트랜잭션처리가 없는 경우에)
 @Service
 @RequiredArgsConstructor
-// 스프링에서 메서드단위로 트랜잭션처리를 하고, 만약 예외(unchecked)발생시 자동 롤백처리 지원
+// 스프링에서 메서드단위로 트랜잭션처리(commit)를 하고, 만약 예외(unchecked)발생시 자동 롤백처리 지원
 @Transactional
 public class AuthorService {
 
@@ -39,6 +41,7 @@ public class AuthorService {
     // 의존성주입방법3. RequiredArgs 어노테이션 사용 -> 반드시 초기화 되어야 하는 필드(final 등)을 대상으로 생성자를 자동생성
     // 다형성 설계는 불가
     private final AuthorRepository authorRepository;
+    private final PostRepository postRepository;
     public void save(AuthorCreateDto authorCreateDto){
         // 이메을 중복검증
         if(authorRepository.findByEmail(authorCreateDto.getEmail()).isPresent()){
@@ -46,10 +49,26 @@ public class AuthorService {
         }
         // toEntity 패턴을 통해 Author 객체 조립을 공통화
         Author author = authorCreateDto.authorToEntity();//new Author(authorCreateDto.getName(), authorCreateDto.getEmail(), authorCreateDto.getPassword());
+//
+////        cascading 테스트 : 회원이 생성될 때 곧바로 "가입인사" 글을 생성하는 상황
+////        방법 1. 직접 POST객체 생성 후 저장
+        Post post = Post.builder()
+                .title("안녕하세요")
+                .contents(authorCreateDto.getName() + "입니다. 반갑습니다.")
+                //여기서 그냥 author를 넣으면 안된다. 왜냐하면 author는 아직 db에 입력되지 않았기 때문에 id값이 존재하지 않기 때문이다.
+                //그렇기 때문에 위의 author를 새롭게 dbAuthor로 만들어주어 저장한 값을 가지고 와야 다음과 같은 코드가 실행이 될 것이다.
+                //this.authorRepository.save(author); -> Author dbAuthor = this.authorRepository.save(author);로 변경해줘야 함
+                //author 객체가 db에 save 되는 순간 엔티티매니저와 영속성컨텍스트에 의해 author객체에도 id값 생성된다
+                .author(author)
+                .build();
+//        postRepository.save(post);
+////        방법 2. cascade옵션 활용
+        author.getPostList().add(post);
         this.authorRepository.save(author);
-
+        //this.authorRepository.save(author);
     }
     // 트랜잭션이 필요없는경우, 아래와같이 명시적으로 제외
+    // 붙여주는게 성능적으로 좋다.
     @Transactional(readOnly = true)
     public List<AuthorListDto> findAll(){
         return authorRepository.findAll().stream()
@@ -65,6 +84,12 @@ public class AuthorService {
     @Transactional(readOnly = true)
     public AuthorDetailDto findById(Long id){
         Author author  = authorRepository.findById(id).orElseThrow(()->new NoSuchElementException("없는아이디"));
+
+//        연관관계 설정없이 직접조회해서 count값 찾는 경우
+//        List<Post>postList = postRepository.findByAuthor(author);
+//        AuthorDetailDto dto = AuthorDetailDto.fromEntity(author, postList.size());
+
+//        OneToMany연관관계 설정을 통해 count 값 찾는 경우
         AuthorDetailDto dto = AuthorDetailDto.fromEntity(author);
         // author.detailFromEntity();
         // new AuthorDetailDto(author.getId(),author.getName(),author.getEmail());

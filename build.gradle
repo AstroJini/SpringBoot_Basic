@@ -36,7 +36,8 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.4'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
+//	로그인을 위한 security의존성
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 //	서버단에서 화면을 만들어서 랜더링(화면을 준다라는의미) 해주기 위한 기술
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 }

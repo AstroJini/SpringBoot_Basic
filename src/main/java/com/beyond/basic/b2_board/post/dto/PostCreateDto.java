@@ -28,6 +28,7 @@ public class PostCreateDto {
                 .contents(this.contents)
 //                .authorId(this.authorId)
                 .author(author)
+                .delYn("N")
                 .build();
     }
 

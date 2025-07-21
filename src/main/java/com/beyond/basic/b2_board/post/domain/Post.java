@@ -1,6 +1,7 @@
 package com.beyond.basic.b2_board.post.domain;
 
 import com.beyond.basic.b2_board.author.domain.Author;
+import com.beyond.basic.b2_board.common.BaseTimeEntity;
 import com.beyond.basic.b2_board.post.dto.PostListDto;
 import jakarta.persistence.*;
 import lombok.*;
@@ -11,7 +12,7 @@ import lombok.*;
 @NoArgsConstructor
 @Getter
 @ToString
-public class Post {
+public class Post extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,6 +20,7 @@ public class Post {
     private String title;
     @Column(length = 3000)
     private String contents;
+    private String delYn;
 
 // FK 설정시 ManyToOne 필수
 // ManyToOne에서는 default fetch EAGER(즉시로딩)

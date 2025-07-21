@@ -28,9 +28,9 @@ public class AuthorCreateDto {
     public Author authorToEntity() {
         // 빌더패턴은 매개변수의 개수와 매개변수의 순서에 상관없이 객체생성가능
         return Author.builder()
+                .email(this.email)
                 .name(this.name)
                 .password(this.password)
-                .email(this.email)
                 .role(this.role)
                 .build();
     }
