@@ -53,7 +53,7 @@ public class Author extends BaseTimeEntity {
     private Adress adress;
 
 
-//    public Author(String name, String 정mail, String password,  Role role) {
+//    public Author(String name, String email, String password,  Role role) {
 //        //this.id = AuthorMemoryRepository.id;
 //        this.name = name;
 //        this.email = email;
