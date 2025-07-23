@@ -20,18 +20,17 @@ public class AuthorCreateDto {
     @Size(min=8,max=20)
     private String password;
     // 문자열로 값이 넘어오면 Role에 값으로 매핑
-    private Role role = Role.User;
 
 //    public Author authorToEntity(){
 //        return new Author(this.name, this.email, this.password, this.role);
 //    }
-    public Author authorToEntity() {
+    public Author authorToEntity(String encodedPassword) {
         // 빌더패턴은 매개변수의 개수와 매개변수의 순서에 상관없이 객체생성가능
         return Author.builder()
                 .email(this.email)
                 .name(this.name)
-                .password(this.password)
-                .role(this.role)
+                .password(encodedPassword)
+                .role(Role.USER)
                 .build();
     }
 }

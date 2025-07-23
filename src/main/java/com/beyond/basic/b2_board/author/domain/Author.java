@@ -35,7 +35,7 @@ public class Author extends BaseTimeEntity {
     private String password;
     @Enumerated(EnumType.STRING)
     @Builder.Default // 빌더패턴에서 변수 초기화(디폴트값)시 builder.default어노테이션 필수
-    private Role role = Role.User;
+    private Role role = Role.USER;
 
 //    OneToMany는 선택사항, 또한 default가 lazy
 //    mappedBy에는 ManyToOne쪽에 변수명을 문자열로 지정

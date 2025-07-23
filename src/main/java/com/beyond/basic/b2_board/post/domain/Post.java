@@ -6,6 +6,8 @@ import com.beyond.basic.b2_board.post.dto.PostListDto;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Builder
 @AllArgsConstructor
@@ -20,7 +22,11 @@ public class Post extends BaseTimeEntity {
     private String title;
     @Column(length = 3000)
     private String contents;
-    private String delYn;
+    @Builder.Default
+    private String delYn="N";
+    @Builder.Default
+    private String appointment="N";
+    private LocalDateTime appointmentTime;
 
 // FK 설정시 ManyToOne 필수
 // ManyToOne에서는 default fetch EAGER(즉시로딩)
@@ -28,4 +34,9 @@ public class Post extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id") // fk 관계성
     private Author author;
+
+
+    public void updateAppointment(String appointment){
+        this.appointment = appointment;
+    }
 }

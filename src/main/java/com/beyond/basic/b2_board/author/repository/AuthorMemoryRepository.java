@@ -1,6 +1,7 @@
 package com.beyond.basic.b2_board.author.repository;
 
 import com.beyond.basic.b2_board.author.domain.Author;
+import com.beyond.basic.b2_board.author.dto.AuthorDoLoginDto;
 import com.beyond.basic.b2_board.author.dto.AuthorListDto;
 import org.springframework.stereotype.Repository;
 

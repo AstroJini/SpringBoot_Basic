@@ -43,6 +43,7 @@ public interface PostRepository extends JpaRepository<Post, Long>{
 //    org.springframework.data.domain.Pageable import
 //    Page객체 안에 List<Post>포함, 전체 페이지 수 등의 정보 포함.
 //    Pageable객체 안에는 페이지size, 페이지번호, 정렬기준 등이 포함
-    Page<Post> findAllByDelYn(Pageable pageable, String delYn);
+    Page<Post> findAllByDelYnAndAppointment(Pageable pageable, String delYn, String appointment);
 
+    List<Post> findByAppointment(String appointment);
 }

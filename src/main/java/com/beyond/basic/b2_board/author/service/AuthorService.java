@@ -1,21 +1,21 @@
 package com.beyond.basic.b2_board.author.service;
 
 import com.beyond.basic.b2_board.author.domain.Author;
-import com.beyond.basic.b2_board.author.dto.AuthorCreateDto;
-import com.beyond.basic.b2_board.author.dto.AuthorDetailDto;
-import com.beyond.basic.b2_board.author.dto.AuthorListDto;
-import com.beyond.basic.b2_board.author.dto.AuthorUpdatePwDto;
+import com.beyond.basic.b2_board.author.dto.*;
 //import com.beyond.basic.b2_board.repository.AuthorJdbcRepository;
 //import com.beyond.basic.b2_board.repository.AuthorMemoryRepository;
 import com.beyond.basic.b2_board.author.repository.AuthorRepository;
 import com.beyond.basic.b2_board.post.domain.Post;
 import com.beyond.basic.b2_board.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 // Component 로도 대채 가능(트랜잭션처리가 없는 경우에)
@@ -42,19 +42,22 @@ public class AuthorService {
     // 다형성 설계는 불가
     private final AuthorRepository authorRepository;
     private final PostRepository postRepository;
+    private final PasswordEncoder passwordEncoder;
     public void save(AuthorCreateDto authorCreateDto){
         // 이메을 중복검증
         if(authorRepository.findByEmail(authorCreateDto.getEmail()).isPresent()){
             throw new IllegalArgumentException("이미 존재하는 이메일 입니다");
         }
         // toEntity 패턴을 통해 Author 객체 조립을 공통화
-        Author author = authorCreateDto.authorToEntity();//new Author(authorCreateDto.getName(), authorCreateDto.getEmail(), authorCreateDto.getPassword());
+        String encodedPassword = passwordEncoder.encode(authorCreateDto.getPassword());
+        Author author = authorCreateDto.authorToEntity(encodedPassword);//new Author(authorCreateDto.getName(), authorCreateDto.getEmail(), authorCreateDto.getPassword());
 //
 ////        cascading 테스트 : 회원이 생성될 때 곧바로 "가입인사" 글을 생성하는 상황
 ////        방법 1. 직접 POST객체 생성 후 저장
         Post post = Post.builder()
                 .title("안녕하세요")
                 .contents(authorCreateDto.getName() + "입니다. 반갑습니다.")
+                .delYn("N")
                 //여기서 그냥 author를 넣으면 안된다. 왜냐하면 author는 아직 db에 입력되지 않았기 때문에 id값이 존재하지 않기 때문이다.
                 //그렇기 때문에 위의 author를 새롭게 dbAuthor로 만들어주어 저장한 값을 가지고 와야 다음과 같은 코드가 실행이 될 것이다.
                 //this.authorRepository.save(author); -> Author dbAuthor = this.authorRepository.save(author);로 변경해줘야 함
@@ -96,6 +99,14 @@ public class AuthorService {
         return dto;
     }
 
+    @Transactional(readOnly = true)
+    public AuthorDetailDto myInfo(){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Author author = authorRepository.findByEmail(email).orElseThrow(()->new NoSuchElementException("없는 아이디"));
+        AuthorDetailDto dto = AuthorDetailDto.fromEntity(author);
+        return dto;
+    }
+
     public void updatePassword(AuthorUpdatePwDto authorUpdatePwDto){
         Author author = authorRepository.findByEmail(authorUpdatePwDto.getEmail()).orElseThrow(()->new NoSuchElementException("no email found"));
 //        dirty checking : 객체를 수정한 후 별도의 update쿼리 발생시키지 않아도, 영속성 컨텍스트에 의해 객체 변경사항 자동 db 반영
@@ -104,5 +115,23 @@ public class AuthorService {
     public void delete(Long id){
         Author author =  authorRepository.findById(id).orElseThrow(()->new NoSuchElementException("없는 사용자입니다"));
         authorRepository.delete(author);
+    }
+
+    public Author doLogin(AuthorDoLoginDto authorDoLoginDto){
+        Optional<Author> optionalAuthor = authorRepository.findByEmail(authorDoLoginDto.getEmail());
+        boolean check = true;
+        if (!optionalAuthor.isPresent()){
+            check = false;
+        }else {
+//            비밀번호 일치여부 검증 : matches함수를 통해서 암호되지않은 값을 다시 암호화하여 db의 password를 검증한다.
+            if (!passwordEncoder.matches(authorDoLoginDto.getPassword(), optionalAuthor.get().getPassword())){
+                check = false;
+            }
+        }
+        if (!check){
+            System.out.println("로그인 실패했습니다.");
+            throw new IllegalArgumentException("email 또는 비밀번호가 일치하지 않습니다");
+        }
+        return optionalAuthor.get();
     }
 }
